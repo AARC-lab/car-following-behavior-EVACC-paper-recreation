@@ -1,0 +1,27 @@
+*.idea
+data/
+__pycache__/
+# Ignore Jupyter Notebook checkpoints (if using notebooks)
+.ipynb_checkpoints/
+
+# Ignore log files and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Ignore output data files
+CarFollowing.txt
+CarFollowing_Modular.txt
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+*.iml
+
+carenv/
+*.env
+*.pdf
+*.json
+*.csv
+
