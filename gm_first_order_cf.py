@@ -1,8 +1,3 @@
-"""
-Python Module for simulating Car-Following Theory using the
-GM First Car Following Model with modular functions.
-"""
-
 import numpy as np
 
 # Simulation Parameters
@@ -18,7 +13,6 @@ N_STEPS = int(T_TOTAL / T_STEP)  # Number of Simulation Steps
 
 
 def generate_time_vector():
-    """ Generate time vector for the simulation. """
     return np.arange(0, T_TOTAL, T_STEP)
 
 
