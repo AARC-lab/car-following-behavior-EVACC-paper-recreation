@@ -11,7 +11,7 @@ __pycache__/
 *.swo
 
 # Ignore output data files
-CarFollowing.txt
+data/CarFollowing.txt
 CarFollowing_Modular.txt
 
 # Ignore IDE-specific files
@@ -24,4 +24,5 @@ carenv/
 *.pdf
 *.json
 *.csv
+test.py
 
