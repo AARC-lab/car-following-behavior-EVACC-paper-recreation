@@ -4,9 +4,9 @@ General Motors (GM) First-Order Model, a linear stimulus-response model. It mode
 ## Model Equation
 The acceleration of a following vehicle is proportional to the velocity difference between itself and the preceding vehicle:  
 
-$$[
+$$
 a_n(t) = \lambda \left[ v_{n-1}(t - \tau) - v_n(t - \tau) \right]
-]
+
 $$
 where:  
 
