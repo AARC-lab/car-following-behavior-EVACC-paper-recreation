@@ -12,7 +12,7 @@ $$
 
 where:  
 
-- **\( a_n(t) \)** → Acceleration of the **n-th** vehicle at time \( t \).  
+- **$ a_n(t) $** → Acceleration of the **n-th** vehicle at time \( t \).  
 - **\( \lambda \)** → Sensitivity coefficient (stimulus coefficient).  
 - **\( v_n(t) \)** → Speed of the **n-th** vehicle at time \( t \).  
 - **\( v_{n-1}(t) \)** → Speed of the **leading vehicle** at time \( t \).  
