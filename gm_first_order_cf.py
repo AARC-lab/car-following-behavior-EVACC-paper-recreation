@@ -1,8 +1,3 @@
-"""
-Python Module for simulating Car-Following Theory using the
-GM First Car Following Model with modular functions.
-"""
-
 import numpy as np
 
 # Simulation Parameters
