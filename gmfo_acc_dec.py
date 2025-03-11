@@ -1,10 +1,12 @@
+from time import time
+
 import numpy as np
 
 # Simulation Parameters
 COEF = 0.74  # Stimulus Coefficient
 DELTA_T = 2.2  # Reaction Time (s)
 V_INIT = 44  # Initial Speed (ft/s)
-DECEL_RATE = -4.6  # Deceleration Rate of the Lead Vehicle (ft/s²)
+DECEL_RATES = [-2.0, -3.0, -4.6, -5.0]  # List of deceleration rates (ft/s²)
 HEADWAY = -114  # Initial Headway (ft)
 N_VEHICLES = 10  # Number of Vehicles
 T_TOTAL = 30  # Total Simulation Time (s)
@@ -25,18 +27,32 @@ def initialize_matrices():
 
 
 def simulate_lead_vehicle(v, a):
-    """ Simulate the motion of the first (lead) vehicle. """
-    v[0, 0] = V_INIT
-    a[0, 0] = DECEL_RATE
+    """ Simulate the motion of the first (lead) vehicle with periodic deceleration and acceleration. """
+    v[0, 0] = V_INIT  # Initial speed
+    a[0, 0] = 0  # Initial acceleration
+    decel_index = 0  # Index to track which deceleration rate to use
 
     for i in range(1, N_STEPS):
-        v_new = v[0, i - 1] + a[0, i - 1] * T_STEP
+        # Check if it's time to decelerate (every 10 seconds)
+        if i % 10 == 0 and i != 0:
+            # Decelerate for 5 seconds
+            decel_rate = DECEL_RATES[decel_index % len(DECEL_RATES)]  # Cycle through the list
+            a[0, i] = decel_rate
+            decel_index += 1  # Move to the next deceleration rate for the next phase
+        # Check if it's time to accelerate back to the previous speed (after 5 seconds of deceleration)
+        elif i % 15 == 0 and i != 0:
+            # Accelerate back to the previous speed
+            a[0, i] = abs(decel_rate)  # Use the absolute value of the last deceleration rate
+        # Maintain constant speed otherwise
+        else:
+            a[0, i] = 0
+
+        # Update velocity
+        v_new = v[0, i - 1] + a[0, i] * T_STEP
         if v_new > 0:
             v[0, i] = v_new
-            a[0, i] = DECEL_RATE
         else:
-            v[0, i] = 0
-            a[0, i] = 0
+            v[0, i] = 0  # Stop if velocity reaches 0
 
 
 def simulate_following_vehicles(v, a):
@@ -66,9 +82,9 @@ def compute_positions(v):
     return d
 
 
-def save_results(time, d):
+def save_results(time, d,target_file_name):
     """ Save simulation results to a text file for plotting. """
-    with open("data/CarFollowing_Modular.txt", "w") as f:
+    with open(f"data/{target_file_name}", "w") as f:
         for i in range(N_STEPS):
             f.write(f"{time[i]:.1f}\t" + "\t".join(f"{d[n, i]:.2f}" for n in range(N_VEHICLES)) + "\n")
 
@@ -82,7 +98,9 @@ def main():
     simulate_following_vehicles(v, a)
     d = compute_positions(v)
 
-    save_results(time, d)
+    save_results(time, d,'CarFollowing_distance.txt')
+    save_results(time, a,'CarFollowing_acceleration.txt')
+    save_results(time, v,'CarFollowing_velocity.txt')
     print("Simulation complete! Results saved to 'CarFollowing_Modular.txt'.")
 
 
