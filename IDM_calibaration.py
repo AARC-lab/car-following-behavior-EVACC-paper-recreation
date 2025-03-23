@@ -3,44 +3,36 @@ import numpy as np
 from scipy.optimize import minimize
 
 
-# Calibration
 # Define the IDM model
-def idm_model(params, df):
+def idm_model(params, time, lead_speed, initial_spacing, initial_speed):
     v0, T, s0, a_max, b = params
-    # spacing = [initial_spacing]
-    # speed = [initial_speed]
-    new_speeds = []
-    new_spacings = []
-    dt = df['Time'].diff().mean()
-    for i in range(len(df)):
-        v = df.loc[i, 'Speed Follower']
-        v_lead = df.loc[i, 'Speed Leader']
-        s = df.loc[i, 'Spacing']
-        delta_v = v_lead - v
+    spacing = [initial_spacing]
+    speed = [initial_speed]
+    for t in range(1, len(time)):
+        dt = time[t] - time[t - 1]
+        delta_v = lead_speed[t - 1] - speed[-1]
+        # Compute desired spacing
+        s_star = s0 + speed[-1] * T + (speed[-1] * delta_v) / (2 * np.sqrt(a_max * b))
 
-        # Desired gap
-        s_star = s0 + v * T + (v * delta_v) / (2 * np.sqrt(a * b))
-
-        # IDM acceleration
-        acc = a * (1 - (v / v0) ** delta - (s_star / s) ** 2)
-
+        # print(f"Time: {time[t]:.2f}, Spacing: {spacing[-1]:.2f}, Speed: {speed[-1]:.2f}, s_star: {s_star:.2f}")
+        # Compute acceleration with stability check
+        # Add a small constant to avoid division by zero
+        spacing_denominator = max(spacing[-1], 1e-6)
+        a = a_max * (1 - (speed[-1] / v0) ** 4 - (s_star / spacing_denominator) ** 2)
+        # a = a_max * (1 - (speed[-1] / v0) ** 4 - (s_star / spacing[-1]) ** 2)
         # Update speed and spacing
-        new_v = v + acc * dt
-        new_s = s + (v_lead - new_v) * dt
+        v_new = speed[-1] + a * dt
+        # Ensure spacing does not become negative
+        spacing[-1] = max(spacing[-1], 0)
+        s_new = spacing[-1] + (lead_speed[t - 1] - speed[-1]) * dt
 
-        new_speeds.append(new_v)
-        new_spacings.append(new_s)
-    return np.array(new_spacings), np.array(new_speeds)
+        spacing.append(s_new)
+        speed.append(v_new)
+    return np.array(spacing), np.array(speed)
 
 # Define the objective function (spacing RMSE)
-def objective(params, subset):
-    simulated_spacing, _ = idm_model(params, subset)
-
-    # Debugging: Print simulated and experimental spacing
-    # print("Simulated Spacing:", simulated_spacing)
-    # print("Experimental Spacing:", experimental_spacing)
-    experimental_spacing = np.array(subset['Spacing'])
-
+def objective(params, time, lead_speed, experimental_spacing, initial_spacing, initial_speed):
+    simulated_spacing, _ = idm_model(params, time, lead_speed, initial_spacing, initial_speed)
     rmse = np.sqrt(np.mean((simulated_spacing - experimental_spacing)**2))
     return rmse
 
@@ -49,9 +41,7 @@ def calibaration_start(df):
     # Split the data into six subsets (each 200 seconds long)
     subset_length = int(200 / 0.02)  # 200 seconds, assuming 0.02-second time steps
     num_subsets = 6
-    subsets = [df.iloc[i:i + subset_length].reset_index() for i in range(0, len(df), subset_length)]
-    # subsets =
-    # subsets = df.head(10000)
+    subsets = [df.iloc[i * subset_length:(i + 1) * subset_length] for i in range(num_subsets)]
 
     print(f"Number of Subset: {len(subsets)}")
     # Calibrate on each subset
@@ -61,49 +51,55 @@ def calibaration_start(df):
     for i, subset in enumerate(subsets):
         print(f"-------------------Calibrating on subset {i + 1}-------------------")
 
-        for j in range(len(subset)-1):
+        # Extract data for the subset
+        time_subset = subset['Time'].values
+        lead_speed_subset = subset['Speed Leader'].values
+        follow_speed_subset = subset['Speed Follower'].values
+        experimental_spacing_subset = subset['Spacing'].values
 
-            # Extract data for the subset
-            time_subset = subset.loc[j,'Time']
-            v_lead = subset.loc[j,'Speed Leader']
-            v = subset.loc[j,'Speed Follower']
-            experimental_spacing = subset.loc[j,'Spacing']
-            delta_v = v_lead -v
-            # Initial conditions
-            # initial_spacing = experimental_spacing_subset.iloc[0]
-            # initial_speed = follow_speed_subset.iloc[0]
+        # Initial conditions
+        initial_spacing = experimental_spacing_subset[0]
+        initial_speed = follow_speed_subset[0]
 
-            # Initial guess for parameters
-            #         initial_params = [0.5, 0.5, 2.0, 1.5]
+        # Initial guess for parameters
+        #         initial_params = [0.5, 0.5, 2.0, 1.5]
 
-            initial_params = [25, 1.5, 2.0, 0.3, 2]
-            # v0, T, s0, a_max, b
+        #         initial_params = [25, 1.0, 1.0, 1.0, 1.67]
+        # initial_params = [v_0, time_headway, inital_sapcing, max_acc, comportable_braking_dec]
+        initial_params = [14, 1.5, 2.0, 2.03, 2]
 
-            # Bounds for parameters
-            #         bounds = [(0, None), (0, None), (0, None), (0, None)]
-            bounds = [(25.0, 45.0), (1, 2.5), (1.0, 5.0), (0.5, 2.0), (1.0, 2.0)]
-            #         bounds = [(20.0, 30.0), (1.0, 3.0), (1.0, 5.0), (0.5, 2.0), (1.0, 2.0)]
+        # Bounds for parameters
+        #         bounds = [(0, None), (0, None), (0, None), (0, None)]
+        # Example bounds for IDM parameters [v0, T, s0, a_max, b]
+        bounds = [
+            (20.0, 40.0),  # v0: Desired speed (m/s)
+            (0.5, 2.5),  # T: Safe time headway (s)
+            (1.0, 5.0),  # s0: Minimum jam distance (m)
+            (0.5, 2.0),  # a_max: Maximum acceleration (m/s²)
+            (1.0, 2.0)  # b: Comfortable deceleration (m/s²)
+        ]
+        #         bounds = [(20.0, 30.0), (1.0, 3.0), (1.0, 5.0), (0.5, 2.0), (1.0, 2.0)]
 
-            # Run optimization
-            result = minimize(objective, initial_params, subset,
-                              bounds=bounds, method='L-BFGS-B')
+        # Run optimization
+        result = minimize(objective, initial_params, args=(
+        time_subset, lead_speed_subset, experimental_spacing_subset, initial_spacing, initial_speed),
+                          bounds=bounds, method='L-BFGS-B')
 
-            # Simulate with the calibrated parameters
-            simulated_spacing, _ = idm_model(result.x, subset)
+        # Simulate with the calibrated parameters
+        simulated_spacing, _ = idm_model(result.x, time_subset, lead_speed_subset, initial_spacing, initial_speed)
 
-            print(f"Simulated Spacing: {len(simulated_spacing)}")
-            # print(f"Experimental Spacing: {len(experimental_spacing_subset)}")
-            experimental_spacing = np.array(subset['Spacing'])
-            rmse = np.sqrt(np.mean((simulated_spacing - experimental_spacing) ** 2))
+        print(f"Simulated Spacing: {len(simulated_spacing)}")
+        print(f"Experimental Spacing: {len(experimental_spacing_subset)}")
+        rmse = np.sqrt(np.mean((simulated_spacing - experimental_spacing_subset) ** 2))
 
-            # Check if this is the best model so far
-            if rmse < best_rmse:
-                best_rmse = rmse
-                best_params = result.x
+        # Check if this is the best model so far
+        if rmse < best_rmse:
+            best_rmse = rmse
+            best_params = result.x
 
-            print(f"Subset {i + 1} RMSE: {rmse:.4f}")
-            print(f"Params: {result.x}")
-    # print("-------------------------------------------------")
+        print(f"Subset {i + 1} RMSE: {rmse:.4f}")
+        print(f"Params: {result.x}")
+    print("-------------------------------------------------")
     print(f"Best params: {best_params} \nBest RMSE : {best_rmse}")
     return best_params, best_rmse
 
@@ -164,68 +160,22 @@ def test_and_viz_full_dataset(df, best_params, limit=None):
     plt.show()
 
 
+def kmh_to_ms(column):
+    return column * (5 / 18)
+
+
 if __name__ == '__main__':
-
-    # IDM parameters
-    a = 0.3  # Maximum acceleration (m/s^2)
-    b = 2  # Comfortable deceleration (m/s^2)
-    v0 = 25 * 1609.34 / 3600  # Desired speed (m/s) converted from mph
-    s0 = 2.0  # Minimum gap (m)
-    T = 1.5  # Desired time headway (s)
-    delta = 4  # Acceleration exponent
-
     data_path = "data/combined_data.csv"
-
     df = pd.read_csv(data_path)
-    # df = df.head(10000)
-    # Convert speeds from mph to m/s
-    df['Speed Follower'] *= 1609.34 / 3600
-    df['Speed Leader'] *= 1609.34 / 3600
+    df['Speed Follower'] = kmh_to_ms(df['Speed Follower'])
+    df['Speed Leader'] = kmh_to_ms(df['Speed Leader'])
 
-    # # Time step (assuming constant time step based on data)
-    # dt = df['Time'].diff().mean()
-    #
-    # # Apply IDM update
-    # new_speeds = []
-    # new_spacings = []
-    #
-    # for i in range(len(df) - 1):
-    #     v = df.loc[i, 'Speed Follower']
-    #     v_lead = df.loc[i, 'Speed Leader']
-    #     s = df.loc[i, 'Spacing']
-    #     delta_v = v_lead - v
-    #
-    #     # Desired gap
-    #     s_star = s0 + v * T + (v * delta_v) / (2 * np.sqrt(a * b))
-    #
-    #     # IDM acceleration
-    #     acc = a * (1 - (v / v0) ** delta - (s_star / s) ** 2)
-    #
-    #     # Update speed and spacing
-    #     new_v = v + acc * dt
-    #     new_s = s + (v_lead - new_v) * dt
-    #
-    #     new_speeds.append(new_v)
-    #     new_spacings.append(new_s)
-    #
-    # # Add last known values (since there's no update for the last row)
-    # new_speeds.append(new_speeds[-1])
-    # new_spacings.append(new_spacings[-1])
-    #
-    # # Add new values to dataframe
-    # df['New Speed Follower'] = new_speeds
-    # df['New Spacing'] = new_spacings
-    #
-    # df[['Time', 'Speed Follower', 'Speed Leader','Spacing', 'New Speed Follower', 'New Spacing']]
-    # print(0)
 
-    # Split the dataset based on the gap setting
-
+    # Divide the dataset based on the gap setting
     medium_gap_df = df[df['gap_setting'] == 'Medium']
     short_gap_df = df[df['gap_setting'] == 'Short']
     long_gap_df = df[df['gap_setting'] == 'Long']
     xlong_gap_df = df[df['gap_setting'] == 'XLong']
-
-    medium_gap_best_params,medium_gap_best_rmse = calibaration_start(medium_gap_df)
-
-    test_and_viz_full_dataset(medium_gap_df, medium_gap_best_params, limit=(0, 170))
+    print(medium_gap_df.shape,short_gap_df.shape,long_gap_df.shape,xlong_gap_df.shape)
+    medium_gap_best_params, medium_gap_best_rmse = calibaration_start(medium_gap_df)
+    print(0)
