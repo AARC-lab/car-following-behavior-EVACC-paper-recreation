@@ -1,6 +1,50 @@
+import math
+
 import pandas as pd
 import numpy as np
 from scipy.optimize import minimize
+
+import numpy as np
+import math
+
+
+def modified_idm_model(params, time, lead_speed, initial_spacing, initial_speed):
+    """
+    Stable IDM model with checks for inf/nan and negative delta_v.
+    """
+    v0, T, s0, a_max, b = params
+    spacing = [initial_spacing]
+    speed = [initial_speed]
+    eps = 1e-6  # Small constant to avoid division by zero
+
+    for t in range(1, len(time)):
+        dt = time[t] - time[t - 1]
+        delta_v = lead_speed[t - 1] - speed[-1]
+
+        # --- Compute s_star with constraints ---
+        s_star = s0 + speed[-1] * T + (speed[-1] * delta_v) / (2 * np.sqrt(a_max * b))
+        s_star = max(s_star, s0)  # Never allow s_star < s0 (minimum jam distance)
+
+        # --- Handle negative delta_v (follower faster than leader) ---
+        if delta_v < 0:
+            # Reduce the impact of negative delta_v to prevent extreme braking
+            s_star = s0 + speed[-1] * T  # Ignore the (negative) dynamic term
+
+        # --- Stabilize acceleration calculation ---
+        spacing_denominator = max(spacing[-1], eps)  # Avoid division by zero
+        a = a_max * (1 - (speed[-1] / v0) ** 4 - (s_star / spacing_denominator) ** 2)
+
+        # --- Limit acceleration to physical bounds ---
+        a = np.clip(a, -b, a_max)  # Deceleration cannot exceed comfortable braking (b)
+
+        # --- Update speed and spacing ---
+        v_new = max(speed[-1] + a * dt, 0)  # Speed cannot be negative
+        s_new = max(spacing[-1] + (lead_speed[t - 1] - speed[-1]) * dt, 0)  # Spacing cannot be negative
+
+        spacing.append(s_new)
+        speed.append(v_new)
+
+    return np.array(spacing), np.array(speed)
 
 
 # Define the IDM model
@@ -10,18 +54,26 @@ def idm_model(params, time, lead_speed, initial_spacing, initial_speed):
     speed = [initial_speed]
     for t in range(1, len(time)):
         dt = time[t] - time[t - 1]
+        leader_speed = lead_speed[t-1]
+        follower_speed = speed[-1]
         delta_v = lead_speed[t - 1] - speed[-1]
         # Compute desired spacing
         s_star = s0 + speed[-1] * T + (speed[-1] * delta_v) / (2 * np.sqrt(a_max * b))
+        if s_star<0:
+            print(0)
+        elif math.isnan(s_star):
+            print(0)
 
         # print(f"Time: {time[t]:.2f}, Spacing: {spacing[-1]:.2f}, Speed: {speed[-1]:.2f}, s_star: {s_star:.2f}")
         # Compute acceleration with stability check
         # Add a small constant to avoid division by zero
-        spacing_denominator = max(spacing[-1], 1e-6)
-        a = a_max * (1 - (speed[-1] / v0) ** 4 - (s_star / spacing_denominator) ** 2)
-        # a = a_max * (1 - (speed[-1] / v0) ** 4 - (s_star / spacing[-1]) ** 2)
+        # spacing_denominator = max(spacing[-1], 1e-6)
+        # a = a_max * (1 - (speed[-1] / v0) ** 4 - (s_star / spacing_denominator) ** 2)
+        a = a_max * (1 - (speed[-1] / v0) ** 4 - (s_star / spacing[-1]) ** 2)
         # Update speed and spacing
         v_new = speed[-1] + a * dt
+        if v_new<0:
+            print(f"New velocity : {v_new}")
         # Ensure spacing does not become negative
         spacing[-1] = max(spacing[-1], 0)
         s_new = spacing[-1] + (lead_speed[t - 1] - speed[-1]) * dt
@@ -32,7 +84,8 @@ def idm_model(params, time, lead_speed, initial_spacing, initial_speed):
 
 # Define the objective function (spacing RMSE)
 def objective(params, time, lead_speed, experimental_spacing, initial_spacing, initial_speed):
-    simulated_spacing, _ = idm_model(params, time, lead_speed, initial_spacing, initial_speed)
+    # simulated_spacing, _ = idm_model(params, time, lead_speed, initial_spacing, initial_speed)
+    simulated_spacing, _ = modified_idm_model(params, time, lead_speed, initial_spacing, initial_speed)
     rmse = np.sqrt(np.mean((simulated_spacing - experimental_spacing)**2))
     return rmse
 
@@ -86,7 +139,8 @@ def calibaration_start(df):
                           bounds=bounds, method='L-BFGS-B')
 
         # Simulate with the calibrated parameters
-        simulated_spacing, _ = idm_model(result.x, time_subset, lead_speed_subset, initial_spacing, initial_speed)
+        # simulated_spacing, _ = idm_model(result.x, time_subset, lead_speed_subset, initial_spacing, initial_speed)
+        simulated_spacing, _ = modified_idm_model(result.x, time_subset, lead_speed_subset, initial_spacing, initial_speed)
 
         print(f"Simulated Spacing: {len(simulated_spacing)}")
         print(f"Experimental Spacing: {len(experimental_spacing_subset)}")
@@ -104,7 +158,7 @@ def calibaration_start(df):
     return best_params, best_rmse
 
 
-def test_and_viz_full_dataset(df, best_params, limit=None):
+def test_and_viz_full_dataset(df, best_params,model_name,report_path, limit=None):
     # Extract relevant columns
     time = np.arange(0, len(df) * 0.02, 0.02)  # Assuming time increments by 0.02 seconds
     #     time = df['Time'].values
@@ -113,7 +167,9 @@ def test_and_viz_full_dataset(df, best_params, limit=None):
     experimental_spacing = df['Spacing'].values  # Assuming this is the spacing
 
     # Test the best model on the entire dataset
-    simulated_spacing_full, simulated_speed_full = idm_model(best_params, time, lead_speed, experimental_spacing[0],
+    # simulated_spacing_full, simulated_speed_full = idm_model(best_params, time, lead_speed, experimental_spacing[0],
+    #                                                          follow_speed[0])
+    simulated_spacing_full, simulated_speed_full = modified_idm_model(best_params, time, lead_speed, experimental_spacing[0],
                                                              follow_speed[0])
     rmse_full = np.sqrt(np.mean((simulated_spacing_full - experimental_spacing) ** 2))
     print("-----------------------------------------------------------------------------")
@@ -130,9 +186,6 @@ def test_and_viz_full_dataset(df, best_params, limit=None):
         simulated_speed_full = simulated_speed_full[mask]
         lead_speed = lead_speed[mask]
 
-    print(time)
-    print(experimental_spacing)
-    print(simulated_spacing_full)
     # Visualize the results
     import matplotlib.pyplot as plt
 
@@ -142,9 +195,10 @@ def test_and_viz_full_dataset(df, best_params, limit=None):
     plt.plot(time, simulated_spacing_full, label='Simulated Spacing', color='red', linestyle='-', linewidth=1)
     plt.xlabel('Time (s)')
     plt.ylabel('Spacing (m)')
-    plt.title(f'Simulated vs Experimental Spacing')
+    plt.title(f'Simulated vs Experimental Spacing of {model_name}')
     plt.legend()
     plt.grid(True)
+    plt.savefig(f"{report_path}{model_name}_spacing.png")
     plt.show()
 
     # Plot simulated vs experimental speed (including leader speed)
@@ -154,9 +208,10 @@ def test_and_viz_full_dataset(df, best_params, limit=None):
     plt.plot(time, lead_speed, label='Leader Speed', color='green', linestyle='-', linewidth=2)
     plt.xlabel('Time (s)')
     plt.ylabel('Speed (m/s)')
-    plt.title(f'Simulated vs Experimental Speed')
+    plt.title(f'Simulated vs Experimental Speed of {model_name}')
     plt.legend()
     plt.grid(True)
+    plt.savefig(f"{report_path}{model_name}_speed.png")
     plt.show()
 
 
@@ -166,6 +221,8 @@ def kmh_to_ms(column):
 
 if __name__ == '__main__':
     data_path = "data/combined_data.csv"
+    report_path = "REPORTS/IDM/"
+    model_name = "IDM"
     df = pd.read_csv(data_path)
     df['Speed Follower'] = kmh_to_ms(df['Speed Follower'])
     df['Speed Leader'] = kmh_to_ms(df['Speed Leader'])
@@ -178,4 +235,6 @@ if __name__ == '__main__':
     xlong_gap_df = df[df['gap_setting'] == 'XLong']
     print(medium_gap_df.shape,short_gap_df.shape,long_gap_df.shape,xlong_gap_df.shape)
     medium_gap_best_params, medium_gap_best_rmse = calibaration_start(medium_gap_df)
+    print(0)
+    test_and_viz_full_dataset(medium_gap_df, medium_gap_best_params,model_name,report_path, limit=(0, 170))
     print(0)

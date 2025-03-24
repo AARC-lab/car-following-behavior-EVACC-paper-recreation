@@ -1,5 +1,6 @@
 *.idea
 data/
+REPORTS/
 __pycache__/
 # Ignore Jupyter Notebook checkpoints (if using notebooks)
 .ipynb_checkpoints/
@@ -25,4 +26,5 @@ carenv/
 *.json
 *.csv
 test.py
+
 
