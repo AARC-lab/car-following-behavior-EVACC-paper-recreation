@@ -21,6 +21,7 @@ CarFollowing_Modular.txt
 *.iml
 
 carenv/
+cfenv/
 *.env
 *.pdf
 *.json
