@@ -10,6 +10,7 @@ __pycache__/
 *.tmp
 *.swp
 *.swo
+*.venv
 
 # Ignore output data files
 data/CarFollowing.txt
