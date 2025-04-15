@@ -158,8 +158,8 @@ def test_and_viz_full_dataset(df, best_params, model_name,gap_setting, report_pa
     plt.title(f'Simulated vs Actual Spacing - {model_name} {gap_setting}')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{report_path}{model_name}_{gap_setting}_spacing.png")
-    plt.show()
+    plt.savefig(f"{report_path}/{model_name}/{gap_setting}_spacing.png")
+    # plt.show()
 
     plt.figure(figsize=(12, 6))
     plt.plot(time, speed_sim, label='Predicted Follower Speed', color='red', linestyle='--')
@@ -169,8 +169,8 @@ def test_and_viz_full_dataset(df, best_params, model_name,gap_setting, report_pa
     plt.title(f'Simulated Follower Speed vs Leader Speed - {model_name} {gap_setting}')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{report_path}{model_name}_{gap_setting}_speed.png")
-    plt.show()
+    plt.savefig(f"{report_path}/{model_name}/{gap_setting}_speed.png")
+    # plt.show()
 
 
 df = pd.read_csv("../data/combined_data.csv")
@@ -179,14 +179,14 @@ df['Speed Leader'] = kmh_to_ms(df['Speed Leader'])
 
 medium_gap_df = df[df['gap_setting'] == 'Medium']
 best_params = calibrate_cacc(medium_gap_df)
-test_and_viz_full_dataset(medium_gap_df, best_params, model_name="CACC",gap_setting="medium", report_path="../REPORTS", limit=(0, 10000))
+test_and_viz_full_dataset(medium_gap_df, best_params, model_name="CACC",gap_setting="medium", report_path="../REPORTS/", limit=(0, 10000))
 
 
 long_gap_df = df[df['gap_setting'] == 'Long']
 best_params = calibrate_cacc(long_gap_df)
-test_and_viz_full_dataset(long_gap_df, best_params, model_name="CACC",gap_setting="long", report_path="../REPORTS", limit=(0, 10000))
+test_and_viz_full_dataset(long_gap_df, best_params, model_name="CACC",gap_setting="long", report_path="../REPORTS/", limit=(0, 10000))
 
 xlong_gap_df = df[df['gap_setting'] == 'XLong']
 best_params = calibrate_cacc(xlong_gap_df)
-test_and_viz_full_dataset(xlong_gap_df, best_params, model_name="CACC",gap_setting="xlong", report_path="../REPORTS", limit=(0, 10000))
+test_and_viz_full_dataset(xlong_gap_df, best_params, model_name="CACC",gap_setting="xlong", report_path="../REPORTS/", limit=(0, 10000))
 

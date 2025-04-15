@@ -72,7 +72,7 @@ def calibaration_start(df):
 
         # Extract data for the subset
         time_subset = subset['Time'].values
-        lead_speed_subset = subset['Speed Leader'].values
+        lead_speed_subset = subset['Speed Follower'].values
         follow_speed_subset = subset['Speed Follower'].values
         experimental_spacing_subset = subset['Spacing'].values
 
@@ -110,7 +110,7 @@ def calibaration_start(df):
     return best_params, best_rmse
 
 
-def test_and_viz_full_dataset(df, best_params,model_name,report_path, limit=None):
+def test_and_viz_full_dataset(df, best_params,model_name,report_path,gap_setting, limit=None):
     # Extract relevant columns
     time = np.arange(0, len(df) * 0.02, 0.02)  # Assuming time increments by 0.02 seconds
     lead_speed = df['Speed Leader'].values
@@ -124,13 +124,17 @@ def test_and_viz_full_dataset(df, best_params,model_name,report_path, limit=None
     print("-----------------------------------------------------------------------------")
     print(f"Full dataset RMSE: {rmse:.4f}")
 
-    update_dict_from_file("../REPORTS/rmse.json", model_name, rmse)
+    model_gap = f"{model_name}_{gap_setting}"
+    update_dict_from_file("../REPORTS/rmse.json", model_gap, rmse)
 
-    with open(f'../REPORTS/best_params_{model_name}.json', 'w') as f:
-        json.dump({
-            'best_params': best_params.tolist(),
-            'best_rmse': float(rmse)
-        }, f, indent=4)
+    os.makedirs(f"../REPORTS/{model_name}", exist_ok=True)
+
+    best_params_dict = {
+        'best_params': best_params.tolist(),
+        'best_rmse': float(rmse)
+    }
+
+    update_dict_from_file(f'../REPORTS/{model_name}/best_params.json', gap_setting, best_params_dict)
 
     # Apply the limit to the data
     if limit is not None:
@@ -143,36 +147,30 @@ def test_and_viz_full_dataset(df, best_params,model_name,report_path, limit=None
         simulated_speed_full = simulated_speed_full[start:end]
         lead_speed = lead_speed[start:end]
 
-    # # print(time)
-    # # print(experimental_spacing)
-    # # print(simulated_spacing_full)
-    # # Visualize the results
-    # import matplotlib.pyplot as plt
-
     # Plot simulated vs experimental spacing
     plt.figure(figsize=(12, 6))
     plt.plot(time, experimental_spacing, label='Experimental Spacing', color='blue', linestyle='-', linewidth=2)
     plt.plot(time, simulated_spacing_full, label='Simulated Spacing', color='red', linestyle='-', linewidth=2)
     plt.xlabel('Time (s)')
     plt.ylabel('Spacing (m)')
-    plt.title(f'Simulated vs Experimental Spacing of {model_name}')
+    plt.title(f'Simulated vs Experimental Spacing of {model_name} - {gap_setting}')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{report_path}{model_name}_spacing.png")
-    plt.show()
+    plt.savefig(f"{report_path}/{model_name}/{gap_setting}_spacing.png")
+    # plt.show()
 
     # Plot simulated vs experimental speed (including leader speed)
     plt.figure(figsize=(12, 6))
-    plt.plot(time, follow_speed, label='Experimental Follower Speed', color='blue', linestyle='-', linewidth=2)
+    # plt.plot(time, follow_speed, label='Experimental Follower Speed', color='blue', linestyle='-', linewidth=2)
     plt.plot(time, simulated_speed_full, label='Simulated Follower Speed', color='red', linestyle='-', linewidth=2)
     plt.plot(time, lead_speed, label='Leader Speed', color='green', linestyle='-', linewidth=2)
     plt.xlabel('Time (s)')
     plt.ylabel('Speed (m/s)')
-    plt.title(f'Simulated vs Experimental Speed of {model_name}')
+    plt.title(f'Simulated vs Experimental Speed of {model_name} - {gap_setting}')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{report_path}{model_name}_speed.png")
-    plt.show()
+    plt.savefig(f"{report_path}/{model_name}/{gap_setting}_speed.png")
+    # plt.show()
 
 
 
@@ -187,6 +185,10 @@ long_gap_df = df[df['gap_setting']=='Long']
 xlong_gap_df = df[df['gap_setting']=='XLong']
 
 medium_gap_best_params,medium_gap_best_rmse = calibaration_start(medium_gap_df)
-report_path = "../REPORTS/OVRV/"
-model_name = "OVRV_medium_gap"
-test_and_viz_full_dataset(medium_gap_df, medium_gap_best_params,model_name,report_path, limit=(0, 10000))
+test_and_viz_full_dataset(medium_gap_df, medium_gap_best_params,model_name="OVRV",report_path="../REPORTS/",gap_setting="medium", limit=(0, 10000))
+
+long_gap_best_params,long_gap_best_rmse = calibaration_start(long_gap_df)
+test_and_viz_full_dataset(long_gap_df, long_gap_best_params,model_name="OVRV",report_path="../REPORTS/",gap_setting="long", limit=(0, 10000))
+
+xlong_gap_best_params,xlong_gap_best_rmse = calibaration_start(xlong_gap_df)
+test_and_viz_full_dataset(xlong_gap_df, xlong_gap_best_params,model_name="OVRV",report_path="../REPORTS/",gap_setting="xlong", limit=(0, 10000))
