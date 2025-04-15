@@ -109,7 +109,7 @@ def calibrate_cacc(df, subset_duration=200, dt=0.02):
 
 
 # --- Evaluation and Visualization ---
-def test_and_viz_full_dataset(df, best_params, model_name, report_path, limit=None):
+def test_and_viz_full_dataset(df, best_params, model_name,gap_setting, report_path, limit=None):
     time = np.arange(0, len(df) * 0.02, 0.02)
     v_leader = df['Speed Leader'].values
     v_follower = df['Speed Follower'].values
@@ -123,13 +123,23 @@ def test_and_viz_full_dataset(df, best_params, model_name, report_path, limit=No
     rmse = np.sqrt(np.mean((spacing_sim - spacing_actual) ** 2))
     print("-----------------------------------------------------------------------------")
     print(f"Full dataset RMSE: {rmse:.4f}")
-    update_dict_from_file("../REPORTS/rmse.json", model_name, rmse)
+    model_gap = f"{model_name}_{gap_setting}"
+    update_dict_from_file("../REPORTS/rmse.json", model_gap, rmse)
 
-    with open(f'../REPORTS/best_params_{model_name}.json', 'w') as f:
-        json.dump({
-            'best_params': best_params.tolist(),
-            'best_rmse': float(rmse)
-        }, f, indent=4)
+    os.makedirs(f"../REPORTS/{model_name}",exist_ok=True)
+
+    best_params_dict = {
+        'best_params': best_params.tolist(),
+        'best_rmse': float(rmse)
+    }
+
+    update_dict_from_file(f'../REPORTS/{model_name}/best_params.json',gap_setting,best_params_dict)
+
+    # with open(f'../REPORTS/{model_name}/best_params.json', 'w') as f:
+    #     json.dump({
+    #         'best_params': best_params.tolist(),
+    #         'best_rmse': float(rmse)
+    #     }, f, indent=4)
 
     if limit is not None:
         start, end = limit
@@ -145,10 +155,10 @@ def test_and_viz_full_dataset(df, best_params, model_name, report_path, limit=No
     plt.plot(time, spacing_sim, label='Predicted Spacing', color='red', linestyle='--')
     plt.xlabel('Time (s)')
     plt.ylabel('Spacing (m)')
-    plt.title(f'CACC - Simulated vs Actual Spacing')
+    plt.title(f'Simulated vs Actual Spacing - {model_name} {gap_setting}')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{report_path}{model_name}_spacing.png")
+    plt.savefig(f"{report_path}{model_name}_{gap_setting}_spacing.png")
     plt.show()
 
     plt.figure(figsize=(12, 6))
@@ -156,10 +166,10 @@ def test_and_viz_full_dataset(df, best_params, model_name, report_path, limit=No
     plt.plot(time, v_leader, label='Leader Speed', color='green')
     plt.xlabel('Time (s)')
     plt.ylabel('Speed (m/s)')
-    plt.title(f'CACC - Simulated Follower Speed vs Leader Speed')
+    plt.title(f'Simulated Follower Speed vs Leader Speed - {model_name} {gap_setting}')
     plt.legend()
     plt.grid(True)
-    plt.savefig(f"{report_path}{model_name}_speed.png")
+    plt.savefig(f"{report_path}{model_name}_{gap_setting}_speed.png")
     plt.show()
 
 
@@ -169,4 +179,14 @@ df['Speed Leader'] = kmh_to_ms(df['Speed Leader'])
 
 medium_gap_df = df[df['gap_setting'] == 'Medium']
 best_params = calibrate_cacc(medium_gap_df)
-test_and_viz_full_dataset(medium_gap_df, best_params, model_name="CACC", report_path="../REPORTS/CACC/", limit=(0, 10000))
+test_and_viz_full_dataset(medium_gap_df, best_params, model_name="CACC",gap_setting="medium", report_path="../REPORTS", limit=(0, 10000))
+
+
+long_gap_df = df[df['gap_setting'] == 'Long']
+best_params = calibrate_cacc(long_gap_df)
+test_and_viz_full_dataset(long_gap_df, best_params, model_name="CACC",gap_setting="long", report_path="../REPORTS", limit=(0, 10000))
+
+xlong_gap_df = df[df['gap_setting'] == 'XLong']
+best_params = calibrate_cacc(xlong_gap_df)
+test_and_viz_full_dataset(xlong_gap_df, best_params, model_name="CACC",gap_setting="xlong", report_path="../REPORTS", limit=(0, 10000))
+
