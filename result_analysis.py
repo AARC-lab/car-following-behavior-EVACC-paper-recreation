@@ -10,7 +10,7 @@ def kmh_to_ms(speed_kmh):
 def load_best_params(folder_path,gap_setting):
     best_params_list = []
     model_names = ['OVRV','IDM','OVM','CACC']
-    # model_names = ['OVRV','IDM']
+    # model_names = ['OVRV']
     for model_name in model_names:
         file_path = f"{folder_path}/{model_name}/best_params.json"
 
@@ -176,7 +176,17 @@ def simulate_full_data(df,best_params,model_name):
     #     lead_speed = lead_speed[start:end]
 
 
+def compute_predicted_speed(df, acc_col="pred_acc_follower", dt_col="dt",
+                            initial_speed_col="Speed Follower", output_col="pred_speed_follower"):
+    predicted_speed = [df[initial_speed_col].iloc[0]]  # start with the actual initial speed
+    for i in range(1, len(df)):
+        dt = df[dt_col].iloc[i]
+        acc = df[acc_col].iloc[i - 1]
+        v_new = predicted_speed[-1] + acc * dt
+        predicted_speed.append(v_new)
 
+    df[output_col] = predicted_speed
+    return df
 
 
 
@@ -189,6 +199,7 @@ if __name__ == '__main__':
     # gap_settings = 'medium'
     # gap_settings = 'long'
     gap_settings = 'xlong'
+    ml_gap_settings = "Medium"
     df = pd.read_csv(data_path)
 
     df['Speed Follower'] = kmh_to_ms(df['Speed Follower'])
@@ -236,10 +247,59 @@ if __name__ == '__main__':
         spacing_curves.append((model_key, simulated_spacing[start_index:end_index]))
         speed_curves.append((model_key, simulated_speed[start_index:end_index]))
 
+    # ML model prediction
+
+
+    # df = df[df['gap_setting'] == ml_gap_settings]
+    #
+    # # Compute relative speed and spacing
+    # df["delta_v"] = df["Speed Follower"] - df["Speed Leader"]
+    #
+    # # Estimate time step and acceleration
+    # df["dt"] = df["Time"].diff()
+    # df["acc_follower"] = df["Speed Follower"].diff() / df["dt"]
+    #
+    # # Estimate time step and acceleration
+    # df["dt"] = df["Time"].diff()
+    # df["acc_follower"] = df["Speed Follower"].diff() / df["dt"]
+    #
+    # # Drop the first row (NaN)
+    # df = df.dropna(subset=["dt", "acc_follower"])
+    #
+    # # Copy the cleaned DataFrame so we can work safely
+    # df_extended = df.copy()
+    #
+    # # One-hot encode the 'gap_setting' column
+    # gap_dummies = pd.get_dummies(df_extended['gap_setting'], prefix='gap')
+    #
+    # # Combine all selected features
+    # features = pd.concat([
+    #     df_extended[["delta_v", "Speed Follower", "speed_fluctuation", "Spacing"]],
+    #     gap_dummies
+    # ], axis=1)
+    #
+    # import joblib
+    #
+    # # Load the trained model from the file
+    # rf_model_loaded = joblib.load(f"notebook/rf_model_acceleration_{gap_settings}.pkl")
+    #
+    # #prediction
+    # prediction = rf_model_loaded.predict(features)
+    # df['pred_acc_follower'] = prediction
+    #
+    # # compute speed
+    # df = compute_predicted_speed(df)
+    #
+    # df_slice = df.iloc[start_index:end_index]
+    # predicted = df_slice['pred_speed_follower'].values
+    #
+    # speed_curves.append(('ml_acc', predicted))
+
+
     # --- Plot Spacing ---
     # Apply clean seaborn theme
     sns.set(style="whitegrid")
-    colors = sns.color_palette("Set2", len(spacing_curves))
+    colors = sns.color_palette("Set2", len(speed_curves))
 
     # --- Plot Spacing ---
     plt.figure(figsize=(10, 5))
@@ -258,7 +318,7 @@ if __name__ == '__main__':
     sns.despine()
     plt.tight_layout()
     plt.savefig(f"{report_dir}/final_results/{gap_settings}_Spacing.pdf", dpi=300)
-    plt.show()
+    # plt.show()
 
     # --- Plot Speed ---
     plt.figure(figsize=(10, 5))
@@ -277,7 +337,7 @@ if __name__ == '__main__':
     sns.despine()
     plt.tight_layout()
     plt.savefig(f"{report_dir}/final_results/{gap_settings}_Speed.pdf", dpi=300)
-    plt.show()
+    # plt.show()
 
     # plt.figure(figsize=(12, 6))
     # plt.plot(time, experimental_spacing, label="Experimental", color='blue', linestyle='dotted', linewidth=1)
