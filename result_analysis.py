@@ -2,7 +2,7 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import seaborn as sns
 
 def kmh_to_ms(speed_kmh):
     return speed_kmh * (1000 / 3600)
@@ -178,11 +178,16 @@ def simulate_full_data(df,best_params,model_name):
 
 
 
+
+
+
 if __name__ == '__main__':
     data_path = "data/combined_data.csv"
     report_dir = 'REPORTS'
     start_index = 0
     end_index = 5000
+    # gap_settings = 'medium'
+    # gap_settings = 'long'
     gap_settings = 'xlong'
     df = pd.read_csv(data_path)
 
@@ -232,30 +237,72 @@ if __name__ == '__main__':
         speed_curves.append((model_key, simulated_speed[start_index:end_index]))
 
     # --- Plot Spacing ---
-    plt.figure(figsize=(12, 6))
-    plt.plot(time, experimental_spacing, label="Experimental", color='blue', linestyle='dotted', linewidth=1)
-    for model_name, spacing in spacing_curves:
-        plt.plot(time, spacing, label=model_name, linewidth=1)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Spacing (m)')
-    plt.title(f'Simulated vs Experimental Spacing - {gap_settings} Gap Setting')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f"{report_dir}/final_results/{gap_settings}l_Spacing.pdf")
+    # Apply clean seaborn theme
+    sns.set(style="whitegrid")
+    colors = sns.color_palette("Set2", len(spacing_curves))
+
+    # --- Plot Spacing ---
+    plt.figure(figsize=(10, 5))
+    plt.plot(time, experimental_spacing, label="Experimental", color='black',
+             linestyle='--', linewidth=1.5)
+
+    for (model_name, spacing), color in zip(spacing_curves, colors):
+        plt.plot(time, spacing, label=model_name, linewidth=1.5, color=color)
+
+    plt.xlabel('Time (s)', fontsize=12)
+    plt.ylabel('Spacing (m)', fontsize=12)
+    plt.title(f'Simulated vs Experimental Spacing\n({gap_settings.capitalize()} Gap Setting)', fontsize=14,
+              weight='bold')
+    plt.legend(fontsize=10)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    sns.despine()
+    plt.tight_layout()
+    plt.savefig(f"{report_dir}/final_results/{gap_settings}_Spacing.pdf", dpi=300)
     plt.show()
 
     # --- Plot Speed ---
-    plt.figure(figsize=(12, 6))
-    plt.plot(time, lead_speed, label="Leader Speed", color='blue', linestyle='dotted', linewidth=1)
-    for model_name, speed in speed_curves:
-        plt.plot(time, speed, label=model_name, linewidth=1)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Speed (m/s)')
-    plt.title(f'Simulated vs Experimental Speed - {gap_settings} Gap Setting')
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f"{report_dir}/final_results/{gap_settings}_Speed.pdf")
+    plt.figure(figsize=(10, 5))
+    plt.plot(time, lead_speed, label="Leader Speed", color='black',
+             linestyle='--', linewidth=1.5)
+
+    for (model_name, speed), color in zip(speed_curves, colors):
+        plt.plot(time, speed, label=model_name, linewidth=1.5, color=color)
+
+    plt.xlabel('Time (s)', fontsize=12)
+    plt.ylabel('Speed (m/s)', fontsize=12)
+    plt.title(f'Simulated vs Experimental Speed\n({gap_settings.capitalize()} Gap Setting)', fontsize=14,
+              weight='bold')
+    plt.legend(fontsize=10)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    sns.despine()
+    plt.tight_layout()
+    plt.savefig(f"{report_dir}/final_results/{gap_settings}_Speed.pdf", dpi=300)
     plt.show()
+
+    # plt.figure(figsize=(12, 6))
+    # plt.plot(time, experimental_spacing, label="Experimental", color='blue', linestyle='dotted', linewidth=1)
+    # for model_name, spacing in spacing_curves:
+    #     plt.plot(time, spacing, label=model_name, linewidth=1)
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Spacing (m)')
+    # plt.title(f'Simulated vs Experimental Spacing - {gap_settings} Gap Setting')
+    # plt.legend()
+    # plt.grid(True)
+    # plt.savefig(f"{report_dir}/final_results/{gap_settings}l_Spacing.pdf")
+    # plt.show()
+    #
+    # # --- Plot Speed ---
+    # plt.figure(figsize=(12, 6))
+    # plt.plot(time, lead_speed, label="Leader Speed", color='blue', linestyle='dotted', linewidth=1)
+    # for model_name, speed in speed_curves:
+    #     plt.plot(time, speed, label=model_name, linewidth=1)
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Speed (m/s)')
+    # plt.title(f'Simulated vs Experimental Speed - {gap_settings} Gap Setting')
+    # plt.legend()
+    # plt.grid(True)
+    # plt.savefig(f"{report_dir}/final_results/{gap_settings}_Speed.pdf")
+    # plt.show()
 
     print(0)
 
