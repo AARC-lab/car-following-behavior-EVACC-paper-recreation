@@ -4,6 +4,9 @@ import seaborn as sns
 import sys
 import os
 
+
+plt.rcParams['font.family'] = 'Serif'
+
 def load_rmse_json(path):
     with open(path, 'r') as f:
         return json.load(f)
@@ -45,6 +48,7 @@ def plot_rmse_bar(rmse_dict, title, save_path):
 
     # Create figure
     plt.figure(figsize=(9, 5))
+    plt.rcParams["font.family"] = "Serif"
     bars = plt.bar(models, values, color=sns.color_palette("Set2", len(models)))
 
     # Add text labels above each bar
@@ -54,17 +58,17 @@ def plot_rmse_bar(rmse_dict, title, save_path):
                  ha='center', va='bottom', fontsize=10)
 
     # Labeling and aesthetics
-    plt.xlabel('Model', fontsize=12)
-    plt.ylabel('RMSE (m)', fontsize=12)
-    plt.title(title, fontsize=14, weight='bold')
-    plt.xticks(rotation=30, fontsize=10)
-    plt.yticks(fontsize=10)
+    plt.xlabel('Model', fontsize=14)
+    plt.ylabel('RMSE (m)', fontsize=14)
+    plt.title(title, fontsize=16, weight='bold')
+    plt.xticks(rotation=30, fontsize=14)
+    plt.yticks(fontsize=14)
     plt.tight_layout()
     plt.grid(True, axis='y', linestyle='--', alpha=0.6)
     sns.despine()
 
     # Save the figure
-    plt.savefig(save_path, dpi=300)
+    plt.savefig(save_path, dpi=200)
     plt.show()
 
 
