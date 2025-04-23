@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 
+
+
 def kmh_to_ms(speed_kmh):
     return speed_kmh * (1000 / 3600)
 
@@ -270,10 +272,12 @@ if __name__ == '__main__':
     start_index = 0
     end_index = 5000
     # gap_settings = 'medium'
-    gap_settings = 'xlong'
-    #gap_settings = 'medium'
+    # gap_settings = 'xlong'
+    gap_settings = 'long'
     ml_gap_settings = "Medium"
-    ml_col = "gap_XLong"
+    # ml_col = "gap_Medium"
+    # ml_col = "gap_XLong"
+    ml_col = "gap_Long"
     df = pd.read_csv(data_path)
 
     df['Speed Follower'] = kmh_to_ms(df['Speed Follower'])
@@ -333,26 +337,31 @@ if __name__ == '__main__':
 
     # --- Plot Spacing ---
     plt.figure(figsize=(10, 5))
+    plt.rcParams['font.family'] = 'Serif'
     plt.plot(time, experimental_spacing, label="Experimental", color='black',
              linestyle='--', linewidth=1.5)
 
     for (model_name, spacing), color in zip(spacing_curves, colors):
         plt.plot(time, spacing, label=model_name, linewidth=1.5, color=color)
 
-    plt.xlabel('Time (s)', fontsize=12)
-    plt.ylabel('Spacing (m)', fontsize=12)
-    plt.title(f'Simulated vs Experimental Spacing\n({gap_settings.capitalize()} Gap Setting)', fontsize=14,
+    plt.xlabel('Time (s)', fontsize=16)
+    plt.ylabel('Spacing (m)', fontsize=16)
+    plt.title(f'Simulated vs Experimental Spacing\n({gap_settings.capitalize()} Gap Setting)', fontsize=18,
               weight='bold')
-    plt.legend(fontsize=10)
+    plt.legend(fontsize=12)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
     plt.grid(True, linestyle='--', alpha=0.6)
     sns.despine()
+
     plt.tight_layout()
-    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Spacing.pdf", dpi=300)
+    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Spacing.pdf", dpi=200)
     # plt.savefig(f"{report_dir}/final_results/Spacing.pdf", dpi=300)
     plt.show()
 
     # --- Plot Speed ---
     plt.figure(figsize=(10, 5))
+    plt.rcParams['font.family'] = 'Serif'
     #plt.plot(time, lead_speed, label="Leader Speed", color='black',
      #        linestyle='--', linewidth=1.5)
     plt.plot(time,follower_speed,label="Follower Speed", color="black", linestyle="dotted", linewidth=1.5)
@@ -360,14 +369,16 @@ if __name__ == '__main__':
     for (model_name, speed), color in zip(speed_curves, colors):
         plt.plot(time, speed, label=model_name, linewidth=1.5, color=color)
 
-    plt.xlabel('Time (s)', fontsize=12)
-    plt.ylabel('Speed (m/s)', fontsize=12)
-    plt.title(f'Simulated vs Experimental Speed\n({gap_settings.capitalize()} Gap Setting)', fontsize=14,
+    plt.xlabel('Time (s)', fontsize=16)
+    plt.ylabel('Speed (m/s)', fontsize=16)
+    plt.title(f'Simulated vs Experimental Speed\n({gap_settings.capitalize()} Gap Setting)', fontsize=18,
               weight='bold')
-    plt.legend(fontsize=10)
+    plt.legend(fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.6)
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
     sns.despine()
     plt.tight_layout()
-    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.pdf", dpi=300)
+    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.pdf", dpi=200)
     plt.show()
     plt.show()
