@@ -1,35 +1,106 @@
-# GM First-Order Car-Following Model  
+# 🚗 EV Car-Following Behavior Modeling
 
-The **General Motors (GM) First-Order Model** is a linear **stimulus-response** model that describes how a group of vehicles react to the speed changes of a leading vehicle over time.  
+This repository provides classical and machine learning models to simulate and predict electric vehicle (EV) car-following behavior under varying gap settings. The models include:
 
-## Model Equation  
-
-The acceleration of a following vehicle is proportional to the velocity difference between itself and the preceding vehicle:  
-
-$$
-a_n(t) = \lambda \left[ v_{n-1}(t - \tau) - v_n(t - \tau) \right]
-$$
-
-where:  
-
-- $a_n(t)$ → Acceleration of the **n-th** vehicle at time \( t \).  
-- $\lambda$ → Sensitivity coefficient (stimulus coefficient).  
-- $v_n(t)$ → Speed of the **n-th** vehicle at time \( t \).  
-- $v_{n-1}(t)$** → Speed of the **leading vehicle** at time \( t \).  
-- $\tau$ → Reaction time delay.  
-
-## Description  
-
-This model assumes that a following vehicle adjusts its acceleration based on the speed difference between itself and the preceding vehicle after a reaction time delay (\( \tau \)). The **sensitivity coefficient (\( \lambda \))** determines how aggressively the following vehicle reacts to speed changes in the lead vehicle.  
-
-## Usage  
-
-The GM First-Order Model is widely used in:  
-
-- **Traffic Flow Simulation** 🏎️  
-- **Autonomous Vehicle Control** 🤖  
-- **Driver Behavior Analysis** 🚗💡  
+- **Classical physics-based models**: IDM, OVM, OVRV, and CACC
+- **Machine Learning models**: Random Forest for acceleration and spacing prediction
+- **Evaluation across gap settings**: Medium, Long, and Extra Long(XLong)
 
 ---
 
-📘 *For more details, refer to traffic flow theory resources and car-following model studies.*
+## 📁 Project Structure
+
+```bash
+├── data/
+├── notebook/
+│   ├── IDM_calibration.ipynb
+│   ├── OVM_calibration.ipynb
+│   ├── OVRV_calibration.ipynb
+│   ├── CACC_calibration.ipynb
+│   ├── acc_prediction.ipynb
+│   ├── space_prediction.ipynb
+├── REPORTS/
+├── final_plot_utils.py 
+├── models/
+├── environment.yml
+└── README.md
+
+```
+
+
+---
+
+## ⚙️ Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your_username/ev-car-following-models.git
+cd car-following-behavior-EVACC-paper-recreation
+
+### 2. Create Virtual Environment
+. shells/install.sh
+````
+## 📊 Usage
+
+Run each notebook under notebook/ to calibrate a physics-based model using RMSE minimization:
+
+```IDM_calibration.ipynb```
+
+```OVM_calibration.ipynb```
+
+```OVRV_calibration.ipynb```
+
+```CACC_calibration.ipynb```
+
+Each notebook outputs:
+
+Best-fit parameters
+
+RMSE plots
+
+Simulated vs actual spacing/speed figures
+
+Results are saved in REPORTS/final_results/.
+
+## 🤖 Machine Learning Model Training
+### 1. Acceleration Prediction
+```bash
+jupyter notebook notebook/acc_prediction.ipynb
+```
+### 2. Spacing Prediction
+```bash
+jupyter notebook notebook/space_prediction.ipynb
+```
+## ML models are saved as:
+```bash
+notebook/rf_model_acc.pkl
+notebook/rf_model_spacing.pkl
+```
+## 📈 Generate Final Evaluation Plots
+```bash
+python final_plot_utils.py
+```
+## 📁 Data Format
+Expected columns in your dataset:
+```bash
+Time, Speed Leader, Speed Follower, Spacing, gap_setting
+```
+The pipeline automatically computes:
+
+- delta_v – relative speed
+
+- acc_follower – follower vehicle acceleration
+
+- dt – time step
+
+## ✅ Output Summary
+- RMSE-calibrated parameters
+
+- Time-series spacing and speed plots
+
+- Residual analysis (ML)
+
+- Machine learning predictions vs classical models
+
+- Visuals for Medium, Long, and XLong gap scenarios
