@@ -33,14 +33,14 @@ def plot_rmse_bar(rmse_dict, title, save_path):
     for bar in bars:
         yval = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2, yval + 0.2, f'{yval:.2f}',
-                 ha='center', va='bottom', fontsize=10)
+                 ha='center', va='bottom', fontsize=14)
 
     # Labeling and aesthetics
-    plt.xlabel('Model', fontsize=14)
-    plt.ylabel('RMSE (m)', fontsize=14)
+    plt.xlabel('Model', fontsize=16)
+    plt.ylabel('RMSE (m)', fontsize=16)
     plt.title(title, fontsize=16, weight='bold')
-    plt.xticks(rotation=30, fontsize=14)
-    plt.yticks(fontsize=14)
+    plt.xticks(rotation=30, fontsize=16)
+    plt.yticks(fontsize=16)
     plt.tight_layout()
     plt.grid(True, axis='y', linestyle='--', alpha=0.6)
     sns.despine()
