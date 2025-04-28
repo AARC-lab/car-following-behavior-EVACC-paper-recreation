@@ -278,6 +278,8 @@ if __name__ == '__main__':
     # ml_col = "gap_Medium"
     # ml_col = "gap_XLong"
     ml_col = "gap_Long"
+    ml_cols = ["gap_Medium","gap_Long","gap_XLong"]
+    classical_gaps = ["medium","long","xlong"]
     df = pd.read_csv(data_path)
 
     df['Speed Follower'] = kmh_to_ms(df['Speed Follower'])
@@ -302,84 +304,90 @@ if __name__ == '__main__':
     experimental_spacing = df['Spacing'].values[start_index:end_index]
     lead_speed = df['Speed Leader'].values[start_index:end_index]
     follower_speed = df['Speed Follower'].values[start_index:end_index]
-    best_params = load_best_params(report_dir,gap_settings)
+
+    for ml_gap,classical_gap in zip(ml_cols,classical_gaps):
+        gap_settings = classical_gap
+        ml_col = ml_col
+
+        best_params = load_best_params(report_dir,gap_settings)
 
 
-    # Prepare for plotting
-    spacing_curves = []
-    speed_curves = []
+        # Prepare for plotting
+        spacing_curves = []
+        speed_curves = []
 
-    # Simulate and collect spacing/speed for each model
-    for best_param in best_params:
-        model_key = list(best_param.keys())[0]
-        model_params = best_param[model_key]
+        # Simulate and collect spacing/speed for each model
+        for best_param in best_params:
+            model_key = list(best_param.keys())[0]
+            model_params = best_param[model_key]
 
-        simulated_spacing, simulated_speed = simulate_full_data(df, model_params, model_key)
-        spacing_curves.append((model_key, simulated_spacing[start_index:end_index]))
-        speed_curves.append((model_key, simulated_speed[start_index:end_index]))
-
-
-    # ML acceleration model prediction
-    # df = df.iloc[start_index:end_index]
-
-    ml_predicted_speed = ml_speed_prediction(df,ml_gap_settings,ml_col)
-    speed_curves.append(('ml_acc', ml_predicted_speed))
-
-    # ML Space Model Prediction
-    # ml_predicted_space = ml_space_prediction(df,ml_col,start_index,end_index)
-    # spacing_curves.append(('ml_space',ml_predicted_space))
+            simulated_spacing, simulated_speed = simulate_full_data(df, model_params, model_key)
+            spacing_curves.append((model_key, simulated_spacing[start_index:end_index]))
+            speed_curves.append((model_key, simulated_speed[start_index:end_index]))
 
 
-    # --- Plot Spacing ---
-    # Apply clean seaborn theme
-    sns.set(style="whitegrid")
-    colors = sns.color_palette("Set2", len(speed_curves))
+        # ML acceleration model prediction
+        # df = df.iloc[start_index:end_index]
 
-    # --- Plot Spacing ---
-    plt.figure(figsize=(10, 5))
-    plt.rcParams['font.family'] = 'Serif'
-    plt.plot(time, experimental_spacing, label="Experimental", color='black',
-             linestyle='--', linewidth=1.5)
+        ml_predicted_speed = ml_speed_prediction(df,ml_gap_settings,ml_col)
+        speed_curves.append(('RF', ml_predicted_speed))
 
-    for (model_name, spacing), color in zip(spacing_curves, colors):
-        plt.plot(time, spacing, label=model_name, linewidth=1.5, color=color)
+        # ML Space Model Prediction
+        # ml_predicted_space = ml_space_prediction(df,ml_col,start_index,end_index)
+        # spacing_curves.append(('ml_space',ml_predicted_space))
 
-    plt.xlabel('Time (s)', fontsize=21)
-    plt.ylabel('Spacing (m)', fontsize=21)
-    plt.title(f'Simulated vs Experimental Spacing\n({gap_settings.capitalize()} Gap Setting)', fontsize=21,
-              weight='bold')
-    plt.legend(fontsize=18)
-    plt.xticks(fontsize=21)
-    plt.yticks(fontsize=21)
-    plt.grid(True, linestyle='--', alpha=0.6)
-    sns.despine()
 
-    plt.tight_layout()
-    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Spacing.eps")
-    # plt.savefig(f"{report_dir}/final_results/Spacing.pdf", dpi=300)
-    plt.show()
+        # --- Plot Spacing ---
+        # Apply clean seaborn theme
+        sns.set(style="whitegrid")
+        colors = sns.color_palette("Set2", len(speed_curves))
 
-    # --- Plot Speed ---
-    plt.figure(figsize=(10, 5))
-    plt.rcParams['font.family'] = 'Serif'
-    #plt.plot(time, lead_speed, label="Leader Speed", color='black',
-     #        linestyle='--', linewidth=1.5)
-    plt.plot(time,follower_speed,label="Follower Speed", color="black", linestyle="dotted", linewidth=1.5)
+        # --- Plot Spacing ---
+        plt.figure(figsize=(10, 6))
+        plt.rcParams['font.family'] = 'Serif'
+        plt.plot(time, experimental_spacing, label="Experimental", color='black',
+                 linestyle='--', linewidth=1.5)
 
-    for (model_name, speed), color in zip(speed_curves, colors):
-        plt.plot(time, speed, label=model_name, linewidth=1.5, color=color)
+        for (model_name, spacing), color in zip(spacing_curves, colors):
+            plt.plot(time, spacing, label=model_name, linewidth=1.5, color=color)
 
-    plt.xlabel('Time (s)', fontsize=21)
-    plt.ylabel('Speed (m/s)', fontsize=21)
-    plt.title(f'Simulated vs Experimental Speed\n({gap_settings.capitalize()} Gap Setting)', fontsize=18,
-              weight='bold')
-    plt.legend(fontsize=18)
-    plt.grid(True, linestyle='--', alpha=0.6)
-    plt.xticks(fontsize=21)
-    plt.yticks(fontsize=21)
-    sns.despine()
-    plt.tight_layout()
-    # plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.pdf", dpi=200)
-    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.eps")
-    plt.show()
-    plt.show()
+        plt.xlabel('Time (s)', fontsize=21)
+        plt.ylabel('Spacing (m)', fontsize=21)
+        plt.title(f'Simulated vs Experimental Spacing\n({gap_settings.capitalize()} Gap Setting)', fontsize=21,
+                  weight='bold')
+        plt.legend(fontsize=14,loc='lower right')
+        plt.xticks(fontsize=21)
+        plt.yticks(fontsize=21)
+        plt.grid(True, linestyle='--', alpha=0.6)
+        sns.despine()
+
+        plt.tight_layout()
+        # plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Spacing.eps")
+        plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Spacing.pdf",dpi=200)
+        # plt.savefig(f"{report_dir}/final_results/Spacing.pdf", dpi=300)
+        plt.show()
+
+        # --- Plot Speed ---
+        plt.figure(figsize=(10, 6))
+        plt.rcParams['font.family'] = 'Serif'
+        #plt.plot(time, lead_speed, label="Leader Speed", color='black',
+         #        linestyle='--', linewidth=1.5)
+        plt.plot(time,follower_speed,label="Follower Speed", color="black", linestyle="dotted", linewidth=1.5)
+
+        for (model_name, speed), color in zip(speed_curves, colors):
+            plt.plot(time, speed, label=model_name, linewidth=1.5, color=color)
+
+        plt.xlabel('Time (s)', fontsize=21)
+        plt.ylabel('Speed (m/s)', fontsize=21)
+        plt.title(f'Simulated vs Experimental Speed\n({gap_settings.capitalize()} Gap Setting)', fontsize=21,
+                  weight='bold')
+        plt.legend(fontsize=14,loc='lower right')
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.xticks(fontsize=21)
+        plt.yticks(fontsize=21)
+        sns.despine()
+        plt.tight_layout()
+        plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.pdf", dpi=200)
+        # plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.eps")
+        plt.show()
+        plt.show()
