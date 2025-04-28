@@ -344,18 +344,18 @@ if __name__ == '__main__':
     for (model_name, spacing), color in zip(spacing_curves, colors):
         plt.plot(time, spacing, label=model_name, linewidth=1.5, color=color)
 
-    plt.xlabel('Time (s)', fontsize=16)
-    plt.ylabel('Spacing (m)', fontsize=16)
-    plt.title(f'Simulated vs Experimental Spacing\n({gap_settings.capitalize()} Gap Setting)', fontsize=18,
+    plt.xlabel('Time (s)', fontsize=21)
+    plt.ylabel('Spacing (m)', fontsize=21)
+    plt.title(f'Simulated vs Experimental Spacing\n({gap_settings.capitalize()} Gap Setting)', fontsize=21,
               weight='bold')
-    plt.legend(fontsize=12)
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.legend(fontsize=18)
+    plt.xticks(fontsize=21)
+    plt.yticks(fontsize=21)
     plt.grid(True, linestyle='--', alpha=0.6)
     sns.despine()
 
     plt.tight_layout()
-    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Spacing.pdf", dpi=200)
+    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Spacing.eps")
     # plt.savefig(f"{report_dir}/final_results/Spacing.pdf", dpi=300)
     plt.show()
 
@@ -369,16 +369,17 @@ if __name__ == '__main__':
     for (model_name, speed), color in zip(speed_curves, colors):
         plt.plot(time, speed, label=model_name, linewidth=1.5, color=color)
 
-    plt.xlabel('Time (s)', fontsize=16)
-    plt.ylabel('Speed (m/s)', fontsize=16)
+    plt.xlabel('Time (s)', fontsize=21)
+    plt.ylabel('Speed (m/s)', fontsize=21)
     plt.title(f'Simulated vs Experimental Speed\n({gap_settings.capitalize()} Gap Setting)', fontsize=18,
               weight='bold')
-    plt.legend(fontsize=12)
+    plt.legend(fontsize=18)
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.xticks(fontsize=16)
-    plt.yticks(fontsize=16)
+    plt.xticks(fontsize=21)
+    plt.yticks(fontsize=21)
     sns.despine()
     plt.tight_layout()
-    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.pdf", dpi=200)
+    # plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.pdf", dpi=200)
+    plt.savefig(f"{report_dir}/final_results/modified/{gap_settings}_Speed.eps")
     plt.show()
     plt.show()
