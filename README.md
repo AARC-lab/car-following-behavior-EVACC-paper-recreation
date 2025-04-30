@@ -20,9 +20,9 @@ This repository provides classical and machine learning models to simulate and p
 │   ├── acc_prediction.ipynb
 │   ├── space_prediction.ipynb
 ├── REPORTS/
-├── final_plot_utils.py 
-├── models/
-├── environment.yml
+├── shells/
+│   ├── install.sh
+├── plot_model_rmse.py
 └── README.md
 
 ```
@@ -79,10 +79,17 @@ notebook/rf_model_spacing.pkl
 ```
 ## 📈 Generate Final Evaluation Plots
 ```bash
-python final_plot_utils.py
+python plot_model_rmse.py
 ```
 ## 📁 Data Format
-Expected columns in your dataset:
+
+The dataset used for this project (EV car-following trajectory data) can be downloaded from the following link:
+
+👉 [Download Dataset (Google Drive)]([https://drive.google.com/your-dataset-link-here](https://drive.google.com/file/d/1sc-yY-Vh0U0sOu_V9XBpVynPrnQY8OZY/view?usp=sharing))
+
+After downloading, place the dataset in the `data/` directory to ensure all notebooks and scripts work correctly.
+
+Expected columns in the dataset:
 ```bash
 Time, Speed Leader, Speed Follower, Spacing, gap_setting
 ```
