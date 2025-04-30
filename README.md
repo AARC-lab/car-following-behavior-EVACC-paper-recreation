@@ -85,7 +85,7 @@ python plot_model_rmse.py
 
 The dataset used for this project (EV car-following trajectory data) can be downloaded from the following link:
 
-👉 [Download Dataset (Google Drive)]([https://drive.google.com/your-dataset-link-here](https://drive.google.com/file/d/1sc-yY-Vh0U0sOu_V9XBpVynPrnQY8OZY/view?usp=sharing))
+👉 [Download Dataset (Google Drive)]([https://drive.google.com/your-dataset-link-here](https://drive.google.com/file/d/1sc-yY-Vh0U0sOu_V9XBpVynPrnQY8OZY/view?usp=sharing)
 
 After downloading, place the dataset in the `data/` directory to ensure all notebooks and scripts work correctly.
 
