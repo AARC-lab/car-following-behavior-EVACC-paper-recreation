@@ -66,11 +66,11 @@ Results are saved in REPORTS/final_results/.
 ## 🤖 Machine Learning Model Training
 ### 1. Acceleration Prediction
 ```bash
-jupyter notebook notebook/acc_prediction.ipynb
+notebook/acc_prediction.ipynb
 ```
 ### 2. Spacing Prediction
 ```bash
-jupyter notebook notebook/space_prediction.ipynb
+notebook/space_prediction.ipynb
 ```
 ## ML models are saved as:
 ```bash
