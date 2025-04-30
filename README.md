@@ -35,7 +35,7 @@ This repository provides classical and machine learning models to simulate and p
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your_username/ev-car-following-models.git
+git clone https://github.com/AARC-lab/car-following-behavior-EVACC-paper-recreation.git
 cd car-following-behavior-EVACC-paper-recreation
 
 ### 2. Create Virtual Environment
